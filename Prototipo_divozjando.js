@@ -2,11 +2,11 @@ let figuras = [];
 let MColor = "calido";
 
 function setup() {
-  createCanvas(600, 1000);
+  createCanvas(450, 600);
 }
 
 function draw() {
-  background(210);
+  background(224, 222, 223);
 
   for (let i = 0; i < figuras.length; i++) {
 
@@ -18,6 +18,9 @@ function draw() {
 
     if (keyIsDown(68)) {
       f.tam += 0.5;
+      f.tamy += 0.5;
+      f.tam_linea += 0.5;
+      f.tamy_linea += 0.5;
     }
 
     push();
@@ -36,17 +39,14 @@ function draw() {
       ellipse(0, 0, f.tam, f.tam);
     }
 
-    if (f.tipo == "cuadrado") {
+    if (f.tipo == "rectangulo") {
       rectMode(CENTER);
-      rect(0, 0, f.tam, f.tam);
+      rect(0, 0, f.tam, f.tamy);
     }
 
-    if (f.tipo == "triangulo") {
-      triangle(
-        -f.tam/2, f.tam/2,
-        0, -f.tam/2,
-        f.tam/2, f.tam/2
-      );
+    if (f.tipo == "linea") {
+      rectMode(CENTER);
+      rect(0, 0, f.tam_linea, f.tamy_linea);
     }
 
     pop();
@@ -57,30 +57,76 @@ function keyPressed() {
 
   if (keyCode === 32) {
 
-    let tipos = ["circulo", "cuadrado", "triangulo"];
-    let tipoRandom = random(tipos);
+    if (figuras.length >=10) {
+      return;
+    }
+
+    let tipos = ["circulo", "rectangulo", "linea"];
+    let tipoRandom;
 
     let colorRandom;
+    let chance = random(100);
 
+     if (chance < 30) {
+        tipoRandom = "linea";
+      }
+      else if (chance < 90) {
+        tipoRandom = "rectangulo";
+      }
+      else {
+        tipoRandom = "circulo";
+      }
+
+      let cantidadCirculos = figuras.filter(f => f.tipo === "circulo").length;
+
+    
+    if (tipoRandom === "circulo" && cantidadCirculos > 0) {
+      tipoRandom = "rectangulo";
+      }
+
+      let colorNegro = color(15, 15, 15);
+
+    let cantidadNegroTotal = figuras.filter(f => 
+      f.color.levels[0] === 15 && 
+      f.color.levels[1] === 15 && 
+      f.color.levels[2] === 15
+    ).length;
 
     if (MColor == "calido") {
 
-      let coloresCalidos = [
-        color(255, 0, 0),
-        color(255, 120, 0),
-        color(255, 220, 0)
-      ];
+      let cantidadNegro = figuras.filter(f => f.color.toString() === color(15, 15, 15).toString()).length;
 
-      colorRandom = random(coloresCalidos);
+      if (chance < 40) {
+        colorRandom = color(181, 22, 22);
+      }
+      else if (chance < 70) {
+        colorRandom = color(219, 172, 24);
+      }
+      else if (chance < 90) {
+        colorRandom = color(97, 60, 51);
+      }
+      else if (cantidadNegroTotal === 0) {
+        colorRandom = colorNegro;
+      } else {
+        colorRandom = color(181, 22, 22); 
+      }
 
-    } else {
-      let coloresFrios = [
-        color(0, 100, 255),
-        color(120, 0, 255),
-        color(0, 255, 255)
-      ];
-      colorRandom = random(coloresFrios);
+    }
+    
+    else {
 
+      if (chance < 70) {
+        colorRandom = color(38, 55, 99);
+      }
+      else if (chance < 30){
+        colorRandom = color(91, 127, 69);
+      }
+      else if (cantidadNegroTotal === 0) {
+        colorRandom = colorNegro;
+      }
+      else {
+        colorRandom = color(91, 127, 69);
+      }
     }
 
     let nuevaFigura = {
@@ -89,8 +135,11 @@ function keyPressed() {
       x: random(width),
       y: random(height),
       tam: random(50, 150),
+      tamy: random(100, 150),
+      tam_linea: random (10, 30),
+      tamy_linea: random (100, 400),
       color: colorRandom,
-      rot: 0
+      rot: random(0, 360),
     };
     
     figuras.push(nuevaFigura);
@@ -105,7 +154,7 @@ function keyPressed() {
     MColor = "frio";
   }
 
-  if (keyCode === DELETE) {
+  if (keyCode === BACKSPACE || keyCode === DELETE) {
     figuras.pop();
   }
 
