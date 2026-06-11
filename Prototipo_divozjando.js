@@ -15,10 +15,12 @@ let negraY = null;
 // Ángulo maestro fijo para el 80% de las figuras (8 de 10).
 let rotacionMaestra = 45; 
 
+
 function setup() {
   createCanvas(450, 600);
 
-  // --- PALETA DE COLORES EXACTA ---
+  inicializarAudio();
+
   let azulBase = color(38, 55, 99);
   let rojoBase = color(181, 22, 22);
   let amarilloBase = color(219, 172, 24);
@@ -39,7 +41,6 @@ function setup() {
 
   let celesteAsignado = false;
 
-  // --- GENERACIÓN AUTOMÁTICA DE LAS 10 FIGURAS ---
   for (let i = 0; i < 10; i++) {
     let tipoRandom;
     let colorRandom;
@@ -134,7 +135,6 @@ function setup() {
 
         esLugarVacio = true;
 
-        // Filtro: Límite de cercanía con la figura negra
         if (negraX !== null && negraY !== null) {
           let figurasCercanasANegra = 0;
           for (let j = 0; j < figuras.length; j++) {
@@ -157,7 +157,6 @@ function setup() {
           }
         }
 
-        // Filtro: Máximo 3 líneas superpuestas
         if (tipoRandom === "linea") {
           let lineasSuperpuestas = 0;
           for (let j = 0; j < figuras.length; j++) {
@@ -182,7 +181,6 @@ function setup() {
           break;
         }
 
-        // Filtro: Espaciado general
         for (let j = 0; j < figuras.length; j++) {
           let otra = figuras[j];
           let d = dist(posicionX, posicionY, otra.x, otra.y);
@@ -199,9 +197,9 @@ function setup() {
 
       if (tipoRandom === "linea" && contadorLineasEspeciales === 0) {
         lineaEspecialX = posicionX;
-        lineaEspecialY = posicionY;
-        lineaEspecialRot = rotacionRandom;
-        lineaEspecialTamY = largoLineaPropuesto; 
+        lineEspecialY = posicionY;
+        lineEspecialRot = rotacionRandom;
+        lineEspecialTamY = largoLineaPropuesto; 
         contadorLineasEspeciales = 1;
       }
     }
@@ -226,9 +224,8 @@ function setup() {
     nuevaFigura.area = calcularArea(nuevaFigura);
     figuras.push(nuevaFigura);
   }
-} // <--- AQUÍ SE CIERRA CORRECTAMENTE LA FUNCIÓN SETUP()
+}
 
-// --- FUNCIÓN AUXILIAR EXTERNA ---
 function calcularArea(f) {
   if (f.tipo === "circulo") {
     let radio = f.tam / 2;
@@ -244,18 +241,17 @@ function calcularArea(f) {
 }
 
 function draw() {
-  background(240); // Fondo gris claro estático
+  background(240);
   noStroke();
+  procesarAudio();
 
-  // 1. Detectamos todas las condiciones del mouse (los 4 cuadrantes)
-  let mouseSuperiorDerecha = (mouseX > width / 2 && mouseY < height / 2); 
-  let mouseSuperiorIzquierda = (mouseX < width / 2 && mouseY < height / 2); 
-  let mouseInferiorDerecha = (mouseX > width / 2 && mouseY > height / 2);  
-  let mouseInferiorIzquierda = (mouseX < width / 2 && mouseY > height / 2); 
+  let mouseSuperiorDerecha = (tipoSonido === "AGUDO" && volumen > 20); 
+  let mouseSuperiorIzquierda = (tipoSonido === "AGUDO" && volumen <= 20); 
+  let mouseInferiorDerecha = (tipoSonido === "GRAVE" && volumen > 20);  
+  let mouseInferiorIzquierda = (tipoSonido === "GRAVE" && volumen <= 20); 
 
   for (let f of figuras) {
     
-    // --- LÓGICA PARA LAS LÍNEAS (Solo si interaccionActivada es true) ---
     if (interaccionActivada && f.tipo === "linea" && (mouseSuperiorDerecha || mouseSuperiorIzquierda)) {
       let velocidad = mouseSuperiorIzquierda ? -2 : 2; 
       let anguloRad = radians(f.rot - 90); 
@@ -263,7 +259,6 @@ function draw() {
       f.x += velocidad * cos(anguloRad);
       f.y += velocidad * sin(anguloRad);
 
-      // Reaparición (Pac-man)
       let margen = f.tamy_linea;
       if (f.x < -margen) f.x = width + margen;
       else if (f.x > width + margen) f.x = -margen;
@@ -271,7 +266,6 @@ function draw() {
       else if (f.y > height + margen) f.y = -margen;
     }
 
-    // --- LÓGICA PARA LOS RECTÁNGULOS (Solo si interaccionActivada es true) ---
     if (interaccionActivada && f.tipo === "rectangulo" && (mouseInferiorDerecha || mouseInferiorIzquierda)) {
       let velocidad = mouseInferiorIzquierda ? 2 : -2; 
       let anguloRad = radians(f.rot - 90); 
@@ -279,7 +273,6 @@ function draw() {
       f.x += velocidad * cos(anguloRad);
       f.y += velocidad * sin(anguloRad);
 
-      // Reaparición (Pac-man)
       let margen = max(f.tam, f.tamy);
       if (f.x < -margen) f.x = width + margen;
       else if (f.x > width + margen) f.x = -margen;
@@ -287,7 +280,6 @@ function draw() {
       else if (f.y > height + margen) f.y = -margen;
     }
 
-    // --- RENDERIZADO / DIBUJO DE LAS FIGURAS ---
     push();
     translate(f.x, f.y);
     rotate(radians(f.rot));
@@ -308,20 +300,15 @@ function draw() {
   }
 }
 
-// --- NUEVA FUNCIÓN: SE ACTIVA AL HACER CLIC EN EL CANVAS ---
 function mousePressed() {
-  // Solo se activa si el clic ocurre DENTRO de los límites del canvas
   if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
-    
-    // El signo "!" invierte el valor actual (si es true pasa a false, y viceversa)
     interaccionActivada = !interaccionActivada; 
-    
   }
 }
 
 function lineasArriba() {
   if (mouseX>width/2 && mouseY<height/2) {
-    ;
+    return true;
   }
   else {
     return false;
@@ -345,7 +332,8 @@ function rectArriba() {
     return false;
   }
 }
-  function rectAbajo() {
+
+function rectAbajo() {
   if (mouseX>width/2 && mouseY>height/2) {
     return true;
   }
